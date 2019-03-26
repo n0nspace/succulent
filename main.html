@@ -494,127 +494,131 @@ a:hover {
 
 <script>
 //feather icons
-
 feather.replace();
 
 //json
+const url = "https://spreadsheets.google.com/feeds/cells/" + spreadsheetID + "/1/public/values?alt=json";
 
- // Make sure it is public or set to Anyone with link can view 
- var url = "https://spreadsheets.google.com/feeds/cells/" + spreadsheetID + "/1/public/values?alt=json";
+const content = {
+    html: function() {
+        return $.getJSON(url).then(function(data) {
+            //2D array, holding an array for each item
+            const items = [];
 
- $.getJSON(url, function(data) {
-   
-  //array per character
-  var characters = [];
+            //spread info (used for loops), amount of:
+            const rows = JSON.parse(data.feed.gs$rowCount.$t);
+            const columns = JSON.parse(data.feed.gs$colCount.$t);
+            const cells = rows * columns;
 
-  //number of rows
-  var rows = JSON.parse(data.feed.gs$rowCount.$t);
-  var columns = JSON.parse(data.feed.gs$colCount.$t);
-  var cells = rows * columns;
-   
-  //spread data
-  var entry = data.feed.entry;
-   
-  //character arrays
-  var l = columns;
-  var end = columns * 2;
-  
-  //for every row k
-  for (var k = 0; k < rows; k++) {
-    //create an array
-    characters[k] = [];
-    
-    //for every column in row k write content of row; 
-    //end = amount of columns
-    for (var j = l; j < end; j++) {
-      if (entry[j] === undefined) {
-        characters[k].push('entry[j].content.$t');
-      
-        l = j; //set current cell number for next loop
-      } 
-      else {
-        characters[k].push(entry[j].content.$t);
-        
-        l = j; //set current cell number for next loop
-      }
-    }
-    
-    console.log(characters);
-    
-    //if end of row k
-    if (end === cells) {
-      break;
-    }
-    
-    else {
-      end += columns;
-      l += 1;
-    }
-  }
-   
-  //write data for every row - 1 (title row)
-   var content = [];
-   for (var m = 0; m < rows - 1; m++) {
-     content.push('<div class="card ' + characters[m][5] + '"><a href="' + characters[m][4] + '"><div class="overlay"></div><img src="' + characters[m][3] + '"><div class="overlay-text"><i class="fas fa-hashtag"></i></div></a><div class="box"><h2>' + characters[m][0] + '</h2><i>' + characters[m][1] + '</i><div class="sep"></div><div class="desc">' + characters[m][2] + '</div></div></div>')
-   }
-   
-   function resizeGrid() {
-    var winWidth = $('main').innerWidth() - 70 ;
-    var cardWidth = $('.card').outerWidth() + 30 ;
-    var colNum = Math.floor(winWidth / cardWidth);
-    console.log(colNum);
-    
-    if (colNum > 1) {
-      $('#grid').css({
-        'width': cardWidth * colNum
-      });
-      $('.card').css({
-        'margin': '15px'
-      });
-    }
-    
-    else {
-      $('#grid').css({
-        'width': cardWidth - 30
-      });
-      $('.card').css({
-        'margin': '15px 0'
-      });
-    }
-  } 
-  
-   /*ISOTOPE*/
-   $('#grid').hide();
-   $('#grid').append(content).hide();
-   
-   $('#grid').fadeIn();
+            //spread data
+            const entry = data.feed.entry;
 
-   (function(){  // closure to avoid global variable
-    var timeoutResize;
-    $(window).on('resize',function(){
-        clearTimeout(timeoutResize);
-        timeoutResize = setTimeout(function(){
-             resizeGrid();
-        },100);
-    });
-  })();
-  
-  $( document ).ready(function() {
-    resizeGrid();
-    var $grid = $('#grid').isotope({
-       itemSelector: '.card',
-   });
-   
-   $('nav a').on('click', function() {
-    var filterValue = $(this).attr('data-filter');
-    $grid.isotope({
-      filter: filterValue
-    });
-      e.preventDefault();
-    });
-  });
-   
+            //character arrays
+            let l = columns;
+            let end = columns * 2; //current row end
+
+            //for every row k
+            for (let k = 0; k < rows; k++) {
+                //create an array
+                items[k] = [];
+
+                //for every column in row k write content of row; 
+                //end = amount of columns
+                for (let j = l; j < end; j++) {
+                    if (entry[j] === undefined) {
+                        items[k].push('entry[j].content.$t');
+
+                        l = j; //set current cell number for next loop
+                    } else {
+                        items[k].push(entry[j].content.$t);
+
+                        l = j; //set current cell number for next loop
+                    }
+                }
+
+                //if end of row k
+                if (end === cells) {
+                    break;
+                }
+
+                //else, increment to end & beginning of new row
+                else {
+                    end += columns;
+                    l += 1;
+                }
+            }
+
+            //write data for every row - 1 (title row)
+            const content = [];
+            for (let m = 0; m < rows - 1; m++) {
+                content.push('<div class="card ' + items[m][5] + '"><a href="' + items[m][4] + '"><div class="overlay"></div><img src="' + items[m][3] + '"><div class="overlay-text"><i class="fas fa-hashtag"></i></div></a><div class="box"><h2>' + items[m][0] + '</h2><i>' + items[m][1] + '</i><div class="sep"></div><div class="desc">' + items[m][2] + '</div></div></div>')
+            }
+
+            return content;
+        });
+    }
+};
+
+content.html().done(function(html) {
+    buildLayout(html);
 });
+
+function buildLayout(content, grid) {
+
+    $('#grid').hide();
+    $('#grid').append(content);
+
+    $('#grid').fadeIn();
+
+    //resizeGrid on load
+    resizeGrid();
+
+    //initialise isotope
+    const $grid = $('#grid').isotope({
+        itemSelector: '.card',
+    });
+
+    $('nav a').on('click', function() {
+        var filterValue = $(this).attr('data-filter');
+        $grid.isotope({
+            filter: filterValue
+        });
+        e.preventDefault();
+    });
+}
+
+function resizeGrid() {
+    const winWidth = $('main').innerWidth() - 70;
+    const cardWidth = $('.card').outerWidth() + 30;
+    const colNum = Math.floor(winWidth / cardWidth);
+
+    if (colNum > 1) {
+        $('#grid').css({
+            'width': cardWidth * colNum
+        });
+        $('.card').css({
+            'margin': '15px'
+        });
+    } else {
+        $('#grid').css({
+            'width': cardWidth - 30
+        });
+        $('.card').css({
+            'margin': '15px 0'
+        });
+    }
+}
+
+//resizeGrid on window resize
+(function() { // closure to avoid global variable
+    var timeoutResize;
+    $(window).on('resize', function() {
+        clearTimeout(timeoutResize);
+        timeoutResize = setTimeout(function() {
+            resizeGrid();
+        }, 100);
+    });
+})();
 
 $('body').append(
   '<div id="nnspc" style="position: fixed; bottom: 0; right: 0; padding: 10px; background: #181818; z-index: 9;"><a style="font-family: helvetica; font-weight: bold; letter-spacing: -1px; color: #fff; text-decoration: none;" href="https://nonspace.tumblr.com">nonspace.</a></div>'
