@@ -1,5 +1,5 @@
- // ID of your Google Spreadsheet
- var spreadsheetID = "YOURID";
+// ID of your Google Spreadsheet
+const spreadsheetID = "YOURID";
 
 const url = "https://spreadsheets.google.com/feeds/cells/" + spreadsheetID + "/1/public/values?alt=json";
 
