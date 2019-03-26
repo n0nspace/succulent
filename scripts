@@ -28,7 +28,7 @@ const content = {
                 //create an array
                 items[k] = [];  
               
-                //for every column in row k write content of row; 
+                //for every column in row k write content of current column; 
                 //end = amount of columns
                 for (let j = l; j < end; j++) {
                     if (entry[j] === undefined) {
@@ -45,7 +45,9 @@ const content = {
                     end += columns;
                     l += 1;
                 }
-            }            //write data for every row - 1 (title row)
+            }            
+            
+            //write data for every row - 1 (title row)
             const content = [];
             for (let m = 0; m < rows - 1; m++) {
                 content.push('<div class="card ' + items[m][5] + '"><a href="' + items[m][4] + '"><div class="overlay"></div><img src="' + items[m][3] + '"><div class="overlay-text"><i class="fas fa-hashtag"></i></div></a><div class="box"><h2>' + items[m][0] + '</h2><i>' + items[m][1] + '</i><div class="sep"></div><div class="desc">' + items[m][2] + '</div></div></div>')
@@ -60,6 +62,7 @@ const content = {
 content.html().done(function(html) {
     buildLayout(html);
 });
+
 function buildLayout(content, grid) {    $('#grid').hide();
     $('#grid').append(content);    $('#grid').fadeIn();    //resizeGrid on load
     resizeGrid();    //initialise isotope
@@ -72,31 +75,4 @@ function buildLayout(content, grid) {    $('#grid').hide();
         });
         e.preventDefault();
     });
-}function resizeGrid() {
-    const winWidth = $('main').innerWidth() - 70;
-    const cardWidth = $('.card').outerWidth() + 30;
-    const colNum = Math.floor(winWidth / cardWidth);    if (colNum > 1) {
-        $('#grid').css({
-            'width': cardWidth * colNum
-        });
-        $('.card').css({
-            'margin': '15px'
-        });
-    } else {
-        $('#grid').css({
-            'width': cardWidth - 30
-        });
-        $('.card').css({
-            'margin': '15px 0'
-        });
-    }
-}//resizeGrid on window resize
-(function() { // closure to avoid global variable
-    var timeoutResize;
-    $(window).on('resize', function() {
-        clearTimeout(timeoutResize);
-        timeoutResize = setTimeout(function() {
-            resizeGrid();
-        }, 100);
-    });
-})();
+}
