@@ -35,18 +35,41 @@
   <!--Google Fonts-->
   <link href="https://fonts.googleapis.com/css?family=Raleway:400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
   
+  <!--HANDLEBARS.JS-->
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.6/handlebars.min.js"></script>
   
-<!--SETTINGS-->
-<!--The template spreadsheet is here:
+  <!--PAGE SETTINGS-->
+  <!--The template spreadsheet is here:
 https://docs.google.com/spreadsheets/d/124yZTS885Mx4BYFN4PPxjP450LrRrTMmTubI0MoI4WE/edit?usp=sharing
-Instructions are in the "INSTRUCTIONS" tab.
--->
+Instructions are in the "INSTRUCTIONS" tab.-->
   
-<!--If you use it without the spreadsheet delete or uncomment this script-->  
-<script>
- // ID of your Google Spreadsheet
- var spreadsheetID = "YOURID";
-</script>
+  <script>
+    /*TO GET THE SHEET ID:
+    1. Go to your spreadsheet > File > Publish to web.
+    2. Click on "Entire Document" and select the speficic sheet (in the
+       example it is called "MAIN") > publish, ignore the URL.
+    3. File > Share > Anyone with link can share. This URL is important.
+    4. Copy the following string from the URL and paste it in sheetID:
+       Example:
+       https://docs.google.com/spreadsheets/d/
+         1jKi9Knw7e5qr4bXr_zQib8FwpGM7E6eqRx1tH3JruIA (this part)
+      /edit?usp=sharing
+      
+    TO GET API KEY:
+    1. Go to https://console.cloud.google.com/projectselector2/apis/dashboard 
+    (of the account the sheet is under)
+    2. Create new project
+    3. Create credentials, choose API key (copy this)
+    4. Libraries > search for Google Sheets > Enable*/
+
+    const sheetID = '124yZTS885Mx4BYFN4PPxjP450LrRrTMmTubI0MoI4WE';
+    const sheetTab = 'DATA';
+    const APIkey = 'AIzaSyDJvrhztfzASekzVzdmCGFbBiZT9yW5bk0';
+
+  </script>
+
+  <!--SHEET INTEGRATION-->
+  <script type="text/javascript" src="https://www.dl.dropboxusercontent.com/s/wlxk3q4wkqxescn/nnspc-sheets.js"></script>
 
 <style>
 :root {
@@ -470,14 +493,35 @@ a:hover {
   </aside>
   <main>
     <div id="grid">
-    <!--TEMPLATE
-      You can use the template below if you want to manually add cards.
-      If you use this theme without a spreadsheet and have issues with the grid not working replace the script at the bottom
-      of the page with the one here:
-      https://github.com/nnspce/succulent/blob/master/scripts%20without%20spread
-    -->
-
-    <div class="card f2">
+      
+    <!--GRID ITEM TEMPLATE-->
+      <script id="handlebars-template-grid" type="text/x-handlebars-template">
+      {{#each []}}
+      <!--GRID ITEM START-->
+      <div class="card {{this.filters}}">
+      <a href="{{this.link}}">
+        <div class="overlay"></div>
+        <img src="{{this.imageurl}}">
+        <div class="overlay-text">
+          <i class="fas fa-hashtag"></i>
+        </div>
+      </a>
+      <div class="box">
+        <h2>{{this.headline}}</h2>
+        <i>{{this.title}}</i>
+        <div class="sep"></div>
+        <div class="desc">
+          {{{this.description}}}
+        </div>
+      </div>
+    </div>
+      <!--GRID ITEM END-->
+      {{/each}}
+    </script>
+      
+    <!--TO USE WITHOUT SHEETS-->
+    <!--Delete the above grid templates and uncomment & copy/paste the following:-->
+    <!--<div class="card f2">
       <a href="#">
         <div class="overlay"></div>
         <img src="http://placehold.jp/ddd/666666/250x250.png">
@@ -495,152 +539,23 @@ prosit lorem ipsum dolores pro dolores prosit lorem ipsum dolores prosit
 adipiscing elit.
         </div>
       </div>
-    </div>
+    </div>-->
 
-    -->
     </div>
   </main>
 </div>
 
 </body>
-
-
-<!--SCRIPTS-->
- <!--TEMPLATE
-      If you use this theme without a spreadsheet and have issues with the grid not working replace this script with the one here:
-      https://github.com/nnspce/succulent/blob/master/scripts%20without%20spread
--->
-<script>
-//feather icons
-feather.replace();
-
-//json
-const url = "https://spreadsheets.google.com/feeds/cells/" + spreadsheetID + "/1/public/values?alt=json";
-
-const content = {
-    html: function() {
-        return $.getJSON(url).then(function(data) {
-            //2D array, holding an array for each item
-            const items = [];
-
-            //spread info (used for loops), amount of:
-            const rows = JSON.parse(data.feed.gs$rowCount.$t);
-            const columns = JSON.parse(data.feed.gs$colCount.$t);
-            const cells = rows * columns;
-
-            //spread data
-            const entry = data.feed.entry;
-
-            //character arrays
-            let l = columns;
-            let end = columns * 2; //current row end
-
-            //for every row k
-            for (let k = 0; k < rows; k++) {
-                //create an array
-                items[k] = [];
-
-                //for every column in row k write content of row; 
-                //end = amount of columns
-                for (let j = l; j < end; j++) {
-                    if (entry[j] === undefined) {
-                        items[k].push('entry[j].content.$t');
-
-                        l = j; //set current cell number for next loop
-                    } else {
-                        items[k].push(entry[j].content.$t);
-
-                        l = j; //set current cell number for next loop
-                    }
-                }
-
-                //if end of row k
-                if (end === cells) {
-                    break;
-                }
-
-                //else, increment to end & beginning of new row
-                else {
-                    end += columns;
-                    l += 1;
-                }
-            }
-
-            //write data for every row - 1 (title row)
-            const content = [];
-            for (let m = 0; m < rows - 1; m++) {
-                content.push('<div class="card ' + items[m][5] + '"><a href="' + items[m][4] + '"><div class="overlay"></div><img src="' + items[m][3] + '"><div class="overlay-text"><i class="fas fa-hashtag"></i></div></a><div class="box"><h2>' + items[m][0] + '</h2><i>' + items[m][1] + '</i><div class="sep"></div><div class="desc">' + items[m][2] + '</div></div></div>')
-            }
-
-            return content;
-        });
-    }
-};
-
-content.html().done(function(html) {
-    buildLayout(html);
-});
-
-function buildLayout(content, grid) {
-
-    $('#grid').hide();
-    $('#grid').append(content);
-
-    $('#grid').fadeIn();
-
-    //resizeGrid on load
-    resizeGrid();
-
-    //initialise isotope
-    const $grid = $('#grid').isotope({
-        itemSelector: '.card',
-    });
-
-    $('nav a').on('click', function() {
-        var filterValue = $(this).attr('data-filter');
-        $grid.isotope({
-            filter: filterValue
-        });
-        e.preventDefault();
-    });
-}
-
-function resizeGrid() {
-    const winWidth = $('main').innerWidth() - 70;
-    const cardWidth = $('.card').outerWidth() + 30;
-    const colNum = Math.floor(winWidth / cardWidth);
-
-    if (colNum > 1) {
-        $('#grid').css({
-            'width': cardWidth * colNum
-        });
-        $('.card').css({
-            'margin': '15px'
-        });
-    } else {
-        $('#grid').css({
-            'width': cardWidth - 30
-        });
-        $('.card').css({
-            'margin': '15px 0'
-        });
-    }
-}
-
-//resizeGrid on window resize
-(function() { // closure to avoid global variable
-    var timeoutResize;
-    $(window).on('resize', function() {
-        clearTimeout(timeoutResize);
-        timeoutResize = setTimeout(function() {
-            resizeGrid();
-        }, 100);
-    });
-})();
-
-$('body').append(
-  '<div id="nnspc" style="position: fixed; bottom: 0; right: 0; padding: 10px; background: #181818; z-index: 9;"><a style="font-family: helvetica; font-weight: bold; letter-spacing: -1px; color: #fff; text-decoration: none;" href="https://nonspace.tumblr.com">nonspace.</a></div>'
-);
-</script>
+  
+  <!--SUCCULENT SCRIPTS-->
+  <script type="text/javascript" src="https://www.dl.dropboxusercontent.com/s/pogw3j63qciv5k8/succulent.js"></script>
+  
+  <script>
+  //TEMPLATE LIST
+  //id + selector
+  var templateList = [
+    ['#handlebars-template-grid', '#grid'],
+  ];
+  </script>
 
 </html>
